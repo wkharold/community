@@ -17,18 +17,25 @@ or memory/cpu resources to run the user's notebook for a bounded time period.
 ## (OPTIONAL) Create a project with a billing account attached 
 **(you can also use an existing project and skip to the next step)**
 
-Edit <walkthrough-editor-open-file filePath="env.sh">env.sh</walkthrough-editor-open-file> setting these variables to reflect your environment.
-- <walkthrough-editor-select-regex filePath="env.sh" regex="[YOUR_ORG]">organization</walkthrough-editor-select-regex>
-- <walkthrough-editor-select-regex filePath="env.sh" regex="[YOUR_BILLING_ACCOUNT_NAME]">billing account</walkthrough-editor-select-regex>
-- <walkthrough-editor-select-regex filePath="env.sh" regex="[NAME FOR THE PROJECT YOU WILL CREATE]">project name</walkthrough-editor-select-regex>
-- <walkthrough-editor-select-regex filePath="env.sh" regex="[COMPUTE ZONE YOU WANT TO USE]">zone</walkthrough-editor-select-regex>
+Edit <walkthrough-editor-open-file filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh">env.sh</walkthrough-editor-open-file> setting these variables to reflect your environment.
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[YOUR_ORG\]">organization</walkthrough-editor-select-regex>
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[YOUR_BILLING_ACCOUNT_NAME\]">billing account</walkthrough-editor-select-regex>
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[NAME FOR THE PROJECT YOU WILL CREATE\]">project name</walkthrough-editor-select-regex>
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[COMPUTE ZONE YOU WANT TO USE\]">zone</walkthrough-editor-select-regex>
 
 ```bash
 source ./env.sh
-
+```
+```bash
 gcloud projects create $PROJECT --organization=$ORG
+```
+```bash
 gcloud beta billing projects link $PROJECT --billing-account=$(gcloud beta billing accounts list | grep $BILLING_ACCOUNT | awk '{print $1}')
+```
+```bash
 gcloud config configurations create -- activate $PROJECT
+```
+```bash
 gcloud config set compute/zone $ZONE
 ```
 
@@ -41,35 +48,45 @@ gcloud services enable compute.googleapis.com
 
 1. Clone the Slurm for GCP Git repository
 ```bash
-        git clone https://github.com/schedmd/slurm-gcp.git
-        cd slurm-gcp
+git clone https://github.com/schedmd/slurm-gcp.git
+```
+```bash
+cd slurm-gcp
 ```
 
 2. Modify slurm-cluster.yaml for your environment
 
-You need to customize the <walkthrough-editor-open-file filePath="slurm-gcp/slurm-cluster.yaml">slurm-cluster.yaml</walkthrough-editor-open-file> file
+You need to customize the <walkthrough-editor-open-file filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml">slurm-cluster.yaml</walkthrough-editor-open-file> file
 for your environment before you deploy your cluster.
 
-* Uncomment this <walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="login_node_count">line</walkthrough-editor-select-regex>.
+* Uncomment this <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="login_node_count">line</walkthrough-editor-select-regex>.
 If you want more than one login node modify the value of ```login_node_count``` accordingly.
 * Add a comma separated list of the user ids authorized to use your cluster on the
-<walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="default_user">default user</walkthrough-editor-select-regex>
+<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="default_user">default user</walkthrough-editor-select-regex>
 line
 
 You may also want to make one or more optional changes:
 
 * Deploy your cluster to a different region and/or zone by modifying the values
-<walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="region.*:">here</walkthrough-editor-select-regex>
-and <walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="zone.*:">here</walkthrough-editor-select-regex>
-* Use a different type of <walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="compute_machine_type">compute node</walkthrough-editor-select-regex>, 
+<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="region.*:">here</walkthrough-editor-select-regex>
+and <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="zone.*:">here</walkthrough-editor-select-regex>
+* Use a different type of <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="compute_machine_type">compute node</walkthrough-editor-select-regex>, 
 e.g., if you need more cores or memory than are available in the default choice of ```n1-standard-2```
-* Use an existing <walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="vpc_net">VPC network</walkthrough-editor-select-regex> and
-<walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="vpc_subnet">VPC subnet</walkthrough-editor-select-regex> combination. The
+* Use an existing <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="vpc_net">VPC network</walkthrough-editor-select-regex> and
+<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="vpc_subnet">VPC subnet</walkthrough-editor-select-regex> combination. The
 network/subnet requirements are described in the file ```slurm.jinja.scheme```
-* Specify a different <walkthrough-editor-select-regex filePath="slurm-gcp/slurm-cluster.yaml" regex="slurm_version">version</walkthrough-editor-select-regex>
+* Specify a different <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="slurm_version">version</walkthrough-editor-select-regex>
 of Slurm for your cluster. By default the latest stable version, 17.11.8 at the time of this writing, will be deployed
 
 3. Patch the Slurm startup-script
+
+You need to patch the script that is run on each cluster node at startup. The changes in the patch setup the symbolic links
+and directories to support the installation of software packages shared across nodes and the [environment modules]() uesd
+to access those packages.
+
+```bash
+patch scripts/startup-script.py ../startup-script.patch
+```
 
 3. Deploy Slurm using Deployment Manager
 
