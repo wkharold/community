@@ -3,14 +3,17 @@ title: Using the Slurm Resource Manager to host Jupyter Notebooks
 description: Learn how to run your Jupyter Notebooks on a Compute Engine instance managed by the Slurm Resource Manager
 author: wardharold
 tags: GCE, Slurm, Jupyter
-date_published: 2018-12-14
+date_published: 2018-12-21
 ---
-This tutorial shows you how to run a [Jupyter Notebook]() as a job managed by the [Slurm Resource Manager]().
+This tutorial shows you how to run a [Jupyter Notebook](https://jupyter.org) as a job managed by the [Slurm Resource Manager](https://slurm.schedmd.com).
 Slurm is a popular resource manager used in many High Performance Computing centers. Jupyter notebooks are a
 favorite tool of Machine Learning and Data Science specialists. While they are often run on an individual user's
 laptop there are situations that call for specialized hardware, e.g., GPUs, or more memory or cores than are
 available locally. In those situations Slurm can allocate a compute instance has the requisite hardware
 or memory/cpu resources to run the user's notebook for a bounded time period.
+
+This diagram illustrates the configuration you will create by following the tutorial steps.
+![diagram](slurm_notebook_illustration.png)
 
 [![button](http://gstatic.com/cloudssh/images/open-btn.png)](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/GoogleCloudPlatform/community&page=editor&tutorial=tutorials/using-slurm-to-host-jupyter-notebooks/index.md)
 
@@ -81,173 +84,206 @@ of Slurm for your cluster. By default the latest stable version, 17.11.8 at the 
 3. Patch the Slurm startup-script
 
 You need to patch the script that is run on each cluster node at startup. The changes in the patch setup the symbolic links
-and directories to support the installation of software packages shared across nodes and the [environment modules]() uesd
+and directories to support the installation of software packages shared across nodes and the [environment modules](http://modules.sourceforge.net) uesd
 to access those packages.
 
 ```bash
 patch scripts/startup-script.py ../startup-script.patch
 ```
 
-3. Deploy Slurm using Deployment Manager
+4. Deploy Slurm using Deployment Manager
 
-4. Verify that your cluster is operational
+Use Deployment Manager to deploy your cluster.
+```bash
+gcloud deployment-manager deployments --project="$(gcloud config get-value core/project)" create slurm --config slurm-cluster.yaml
+```
+
+5. Verify that your cluster is operational
+
+Use these commands to verify that your cluster is operational.
+
+```bash
+gcloud compute ssh google1-login1 --command 'sbatch -N2 --wrap="srun hostname"'
+```
+
+```bash
+gcloud compute ssh google1-login1 --command 'cat slurm-*.out'
+```
+
+You should see output that looks like:
+```
+google1-compute1
+google1-compute2
+```
 
 ## Setup an Anaconda environment module
 
-1. Create the cluster and get its credentials
+Environment modules update your environment variables, e.g., PATH, MANPATH, LD_LIBRARY_LOAD, etc., to include information necessary
+to access specific software components. In this step you will install the [Anaconda](https://www.anaconda.com) package for Python 3.x and create an
+environment module for it.
 
-        CLUSTER=[NAME OF THE KUBERNETES CLUSTER YOU WILL CREATE]
-        gcloud container clusters create ${CLUSTER}
-        gcloud container clusters get-credentials ${CLUSTER}
+1. Install the Anaconda3 package
 
-2. Grant yourself cluster-admin privileges
+Download the Anaconda3 (version 5.3.1) package
+```bash
+gcloud compute ssh google1-controller --command 'sudo wget --directory-prefix=/tmp https://repo.anaconda.com/archive/Anaconda3-5.3.1-Linux-x86_64.sh'
+```
 
-        ACCOUNT=$(gcloud config get-value core/account)
-        kubectl create clusterrolebinding core-cluster-admin-binding \
-            --user ${ACCOUNT} \
-            --clusterrole cluster-admin
+Install Anaconda3 (version 5.3.1) in the /apps directory so that each of the Slurm compute nodes can access it.
+```bash
+gcloud compute ssh google1-controller --command 'sudo chmod a+x /tmp/Anaconda3-5.3.1-Linux-x86_64.sh; sudo /tmp/Anaconda3-5.3.1-Linux-x86_64.sh -b -p /apps/anaconda3/5.3.1 -f'
+```
 
-3. Install [Helm](https://github.com/helm/helm)
+2. Create a modulefile for your Anaconda3 installation
 
-    Download the [desired version](https://github.com/helm/helm/releases) and unpack it.
+Create an anaconda3 directory in the ```/apps/modulefiles``` directory. Each installed version of Anaconda3 will have a separate
+appropriately named modulefile.
+```bash
+gcloud compute ssh google1-controller --command 'sudo mkdir -p /apps/modulefiles/anaconda3'
+```
 
-        wget https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
-        tar xf helm-v2.11.0-linux-amd64.tar.gz
+Copy the modulefile for Anaconda3 (version 5.3.1) to the controller node.
+```bash
+gcloud compute scp anaconda3-5.3.1-modulefile google1-controller:/tmp
+```
 
-    Add the `helm` binary to `/usr/local/bin`.
+Move the Anaconda3 (version 5.3.1) modulefile into the ```/apps/modulefiles/anaconda3``` directory.
+```bash
+gcloud compute ssh google1-controller --command 'sudo mv /tmp/anaconda3-5.3.1-modulefile /apps/modulefiles/anaconda3/5.3.1'
+```
 
-        sudo ln -s $PWD/linux-amd64/helm /usr/local/bin/helm
+3. Verify that the anaconda3/5.3.1 module is available
+```bash
+gcloud compute ssh google1-login1 --command 'module avail'
+```
 
-    Create a file named `rbac-config.yaml` containing the following:
-
-        apiVersion: v1
-        kind: ServiceAccount
-        metadata:
-          name: tiller
-          namespace: kube-system
-        ---
-        apiVersion: rbac.authorization.k8s.io/v1beta1
-        kind: ClusterRoleBinding
-        metadata:
-          name: tiller
-        roleRef:
-          apiGroup: rbac.authorization.k8s.io
-          kind: ClusterRole
-          name: cluster-admin
-        subjects:
-          - kind: ServiceAccount
-            name: tiller
-            namespace: kube-system
-
-    Create the `tiller` service account and `cluster-admin` role binding.
-
-        kubectl apply -f rbac-config.yaml
-
-    Initialize Helm.
-
-        helm init --service-account tiller
+You should see output that looks like
+```
+------------------------ /usr/share/Modules/modulefiles ------------------------
+dot         module-git  module-info modules     null        use.own
+------------------------------- /etc/modulefiles -------------------------------
+mpi/openmpi-x86_64
+------------------------------ /apps/modulefiles -------------------------------
+anaconda3/5.3.1
+```
 
 ## Run a Jupyter Notebook as a Slurm batch job
 
-Create an instance of NFS-Client Provisioner connected to the Cloud Filestore instance you created earlier 
-via its IP address (`${FSADDR}`). The NFS-Client Provisioner creates a new storage class: `nfs-client`. Persistent
-volume claims against that storage class will be fulfilled by creating persistent volumes backed by directories
-under the `/volumes` directory on the Cloud Filestore instance's managed storage.
+You run a Jupyter Notebook as a batch job by submitting the ```notebook.batch``` file to 
+slurm via the ```sbatch``` command.
 
-    helm install stable/nfs-client-provisioner --name nfs-cp --set nfs.server=${FSADDR} --set nfs.path=/volumes
-    watch kubectl get po -l app=nfs-client-provisioner
+1. Copy the ```notebook.batch``` file to your cluster's login node.
 
-Press Ctrl-C when the provisioner pod's status changes to Running.
+All of the ```sbatch``` directives for the notebook job are at the top of the ```notebook.batch```
+file. 
+
+```
+#SBATCH --partition debug
+#SBATCH --nodes 1
+#SBATCH --ntasks-per-node 1
+#SBATCH --mem-per-cpu 2G
+#SBATCH --time 1-0:00:00
+#SBATCH --job-name jupyter-notebook
+#SBATCH --output jupyter-notebook-%J.log
+```
+
+If you need to modify them, e.g., to have more memory per CPU or a different
+lifetime for your notebook, do so before you copy it to your cluster's login node.
+
+Use the ```scp``` command to copy ```notebook.batch``` to your cluster's login node.
+
+```bash
+gcloud compute scp notebook.batch google1-login1:~
+```
+
+2. Submit the notebook job using the ```sbatch``` command.
+
+```bash
+gcloud compute ssh google1-login1 --command 'sbatch notebook.batch'
+```
+
+You should see output that looks like this:
+```
+Submitted batch job nn
+```
+
+Where *nn* is the job number for your notebook.
+
+3. Verify that your Jupyter Notebook started up properly.
+
+Substitute your notebook's job number for *nn* in this command to verfiy that your
+notebook job started up properly.
+
+```bash
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log'
+```
+
+You should see output that looks like this:
+```
+CloudShell port forward command for WebPreview
+gcloud compute ssh google1-compute2 -- -A -t -l wkh_google_com -L 8080:10.10.0.4:8080
+
+[I 18:41:52.465 NotebookApp] JupyterLab extension loaded from /apps/anaconda3/5.3.1/lib/python3.7/site-packages/jupyterlab
+[I 18:41:52.468 NotebookApp] JupyterLab application directory is /apps/anaconda3/5.3.1/share/jupyter/lab
+[I 18:41:52.480 NotebookApp] Serving notebooks from local directory: /home/wkh_google_com
+[I 18:41:52.483 NotebookApp] The Jupyter Notebook is running at:
+[I 18:41:52.486 NotebookApp] http://google1-compute2:8080/?token=5f8bc1a29d0bfd6f3cbdbd29186359bc47f04054b9f7cf86
+[I 18:41:52.488 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 18:41:52.494 NotebookApp]
+
+    Copy/paste this URL into your browser when you connect for the first time,
+    to login with a token:
+        http://google1-compute2:8080/?token=5f8bc1a29d0bfd6f3cbdbd29186359bc47f04054b9f7cf86
+[I 18:43:57.756 NotebookApp] 302 GET /?authuser=0 (10.10.0.4) 0.82ms
+[I 18:43:57.830 NotebookApp] 302 GET /tree?authuser=0 (10.10.0.4) 1.00ms
+[W 18:44:02.879 NotebookApp] 401 POST /login?next=%2Ftree%3Fauthuser%3D0 (10.10.0.4) 1.73ms referer=https://8080-dot-3011042-dot-devshell.appspot.com/login?next=%2Ftree%3Fauthuser%3D0
+[W 18:44:54.375 NotebookApp] 401 POST /login?next=%2Ftree%3Fauthuser%3D0 (10.10.0.4) 4.27ms referer=https://8080-dot-3011042-dot-devshell.appspot.com/login?next=%2Ftree%3Fauthuser%3D0
+[W 18:45:09.963 NotebookApp] 401 POST /login?next=%2Ftree%3Fauthuser%3D0 (10.10.0.4) 4.88ms referer=https://8080-dot-3011042-dot-devshell.appspot.com/login?next=%2Ftree%3Fauthuser%3D0
+[I 18:46:29.529 NotebookApp] 302 GET /?authuser=0 (10.10.0.4) 0.70ms
+[I 18:46:29.671 NotebookApp] 302 GET /tree?authuser=0 (10.10.0.4) 0.88ms
+[I 18:46:33.473 NotebookApp] 302 POST /login?next=%2Ftree%3Fauthuser%3D0 (10.10.0.4) 1.14ms
+[I 18:48:36.214 NotebookApp] 302 GET /?authuser=0 (10.10.0.4) 0.74ms
+[I 18:49:14.889 NotebookApp] 302 GET /?authuser=0 (10.10.0.4) 0.72ms
+[I 18:50:41.854 NotebookApp] 302 GET /?authuser=0 (10.10.0.4) 0.63ms
+```
 
 ## Setup an ssh tunnel to your Notebook
 
-While you can use any application that uses storage classes to do [dynamic provisioning](https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/)
-to test the NFS-Client Provisioner, in this tutorial you will deploy a [PostgreSQL](https://www.postgresql.org/) instance to verify
-the configuration.
+You can access your notebook from the Cloud Shell using the Web Preview <walkthrough-web-preview-icon/> tool.
 
-    helm install --name postgresql --set persistence.storageClass=nfs-client stable/postgresql
-    watch kubectl get po -l app=postgresql
+1. Get the login token for your notebook
 
-Press Ctrl-C when the database pod's status changes to Running.
+```bash
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-14.log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
+```
 
-The PostgreSQL Helm chart creates an 8GB persistent volume claim on Cloud Filestore and mounts it at
-`/var/lib/postgresql/data/pgdata` in the database pod.
+Save this value as you will need it to login to your notebook.
+
+2. Create an ssh tunnel to your notebook
+
+Your ```jupyter-notebook-nn.log``` file contains the gcloud command you run to create an ssh
+tunnel to your notebook. You can run it with this command.
+
+```bash
+$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-14.log' 2> /dev/null | egrep '^gcloud')
+```
 
 ## Connect to your Notebook
 
-To verify that the PostgreSQL database files were actually created on the Cloud Filestore managed storage you will
-create a small Compute Engine instance, mount the Cloud Filestore volume on that instance, and inspect the directory
-structure to see that the database files are present.
+Click on the <walkthrough-web-preview-icon/> and choose the ```Preview on port 8080``` option to
+connect to your notebook. 
 
-1. Create an `f1-micro` Compute Engine instance
+This will open a new browser window that connects to your notebook via
+the ssh tunnel you setup in the previous step. 
 
-        gcloud compute --project=${PROJECT} instances create check-nfs-provisioner \
-            --zone=${ZONE} \
-            --machine-type=f1-micro \
-            --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
-            --image=debian-9-stretch-v20180911 \
-            --image-project=debian-cloud \
-            --boot-disk-size=10GB \
-            --boot-disk-type=pd-standard \
-            --boot-disk-device-name=check-nfs-provisioner
+![Jupyter Login Screen](jupyter_login.png)
 
-2. Install the nfs-common package on check-nfs-provisioner
-
-        gcloud compute ssh check-nfs-provisioner --command "sudo apt update -y && sudo apt install nfs-common -y"
-
-3. Mount the Cloud Filestore volume on check-nfs-provisioner
-
-        gcloud compute ssh check-nfs-provisioner --command "sudo mkdir /mnt/gke-volumes && sudo mount ${FSADDR}:/volumes /mnt/gke-volumes"
-
-4. Display the PostgreSQL database directory structure
-
-        gcloud compute ssh check-nfs-provisioner --command  "sudo find /mnt/gke-volumes -type d"
-
-   You will see output like the following modulo the name of the PostgreSQL pod
-
-        /mnt/gke-volumes
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_twophase
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_notify
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_clog
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_stat_tmp
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_stat
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_serial
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/global
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_commit_ts
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_dynshmem
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_snapshots
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_replslot
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_logical
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_logical/snapshots
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_logical/mappings
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_tblspc
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_subtrans
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/base
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/base/1
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/base/12406
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/base/12407
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_xlog
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_xlog/archive_status
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_multixact
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_multixact/offsets
-        /mnt/gke-volumes/default-nfs-postgres-postgresql-pvc-f739e9a1-c032-11e8-9994-42010af00013/postgresql-db/pg_multixact/members
-
+Login by pasting the token you saved in the previous
+step into the *Password or token* field and then pressing the login button.
 
 ## Clean up
 
-1. Delete the check-nfs-provisioner instance
-
-        gcloud compute instances delete check-nfs-provisioner
-
-2. Delete the Kubernetes Engine cluster
-
-        helm destroy postgresql
-        helm destroy nfs-cp
-        gcloud container clusters delete ${CLUSTER}
-
-3. Delete the Cloud Filestore instance
-
-        gcloud beta filestore instances delete ${FS} --location ${ZONE}
-
+Delete your Slurm cluster deployment
+```bash
+gcloud deployment-manager deployments --project="$(gcloud config get-value core/project)" delete slurm 
+```
