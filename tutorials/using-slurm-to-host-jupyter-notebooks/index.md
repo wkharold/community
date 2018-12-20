@@ -100,7 +100,8 @@ gcloud deployment-manager deployments --project="$(gcloud config get-value core/
 
 5. Verify that your cluster is operational
 
-Use these commands to verify that your cluster is operational.
+It will take five to ten minutes after the deployment completes for your cluster's configuration
+to complete. Wait ten minutes and then use these commands to verify that your cluster is operational.
 
 ```bash
 gcloud compute ssh google1-login1 --command 'sbatch -N2 --wrap="srun hostname"'
@@ -143,6 +144,10 @@ gcloud compute ssh google1-controller --command 'sudo mkdir -p /apps/modulefiles
 ```
 
 Copy the modulefile for Anaconda3 (version 5.3.1) to the controller node.
+```bash
+cd ..
+```
+
 ```bash
 gcloud compute scp anaconda3-5.3.1-modulefile google1-controller:/tmp
 ```
@@ -253,8 +258,10 @@ You can access your notebook from the Cloud Shell using the Web Preview <walkthr
 
 1. Get the login token for your notebook
 
-```bash
-gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-14.log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
+Substitute your notebook's job number for *nn* in this command to get the login token for your notebook.
+
+```
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
 ```
 
 Save this value as you will need it to login to your notebook.
@@ -264,8 +271,10 @@ Save this value as you will need it to login to your notebook.
 Your ```jupyter-notebook-nn.log``` file contains the gcloud command you run to create an ssh
 tunnel to your notebook. You can run it with this command.
 
-```bash
-$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-14.log' 2> /dev/null | egrep '^gcloud')
+Substitute your notebook's job number for *nn* in this command to create an ssh tunnel to your notebook.
+
+```
+$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log' 2> /dev/null | egrep '^gcloud')
 ```
 
 ## Connect to your Notebook
