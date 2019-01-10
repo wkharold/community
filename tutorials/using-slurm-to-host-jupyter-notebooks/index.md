@@ -216,7 +216,7 @@ Where *nn* is the job number for your notebook.
 
 3. Verify that your Jupyter Notebook started up properly.
 
-Substitute your notebook's job number for *nn* in this command to verfiy that your
+Substitute your notebook's job number for [NN] in this command to verify that your
 notebook job started up properly.
 
 ```bash
