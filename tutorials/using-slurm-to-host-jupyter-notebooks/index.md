@@ -84,7 +84,7 @@ of Slurm for your cluster. By default the latest stable version, 17.11.8 at the 
 3. Patch the Slurm startup-script
 
 You need to patch the script that is run on each cluster node at startup. The changes in the patch setup the symbolic links
-and directories to support the installation of software packages shared across nodes and the [environment modules](http://modules.sourceforge.net) uesd
+and directories to support the installation of software packages shared across nodes and the [environment modules](http://modules.sourceforge.net) used
 to access those packages.
 
 ```bash
