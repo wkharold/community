@@ -212,7 +212,7 @@ You should see output that looks like this:
 Submitted batch job [NN]
 ```
 
-Where *nn* is the job number for your notebook.
+Where [NN] is the job number for your notebook.
 
 3. Verify that your Jupyter Notebook started up properly.
 
