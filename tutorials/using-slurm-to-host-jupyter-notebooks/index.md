@@ -209,7 +209,7 @@ gcloud compute ssh google1-login1 --command 'sbatch notebook.batch'
 
 You should see output that looks like this:
 ```
-Submitted batch job nn
+Submitted batch job [NN]
 ```
 
 Where *nn* is the job number for your notebook.
