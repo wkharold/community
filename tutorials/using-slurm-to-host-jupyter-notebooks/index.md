@@ -268,7 +268,7 @@ Save this value as you will need it to login to your notebook.
 
 2. Create an ssh tunnel to your notebook
 
-Your ```jupyter-notebook-nn.log``` file contains the gcloud command you run to create an ssh
+Your ```jupyter-notebook-[NN].log``` file contains the gcloud command you run to create an ssh
 tunnel to your notebook. You can run it with this command.
 
 Substitute your notebook's job number for *nn* in this command to create an ssh tunnel to your notebook.
