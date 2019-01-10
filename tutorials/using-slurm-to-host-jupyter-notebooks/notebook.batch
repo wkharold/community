@@ -29,4 +29,4 @@ module load anaconda3/5.3.1
 
 # DON'T USE ADDRESS BELOW. 
 # DO USE TOKEN BELOW
-jupyter-notebook --no-browser --port=${port} --ip=${node}
+jupyter-notebook --no-browser --port=${port} --ip=${ip}

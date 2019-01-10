@@ -20,11 +20,11 @@ This diagram illustrates the configuration you will create by following the tuto
 ## (OPTIONAL) Create a project with a billing account attached 
 **(you can also use an existing project and skip to the next step)**
 
-Edit <walkthrough-editor-open-file filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh">env.sh</walkthrough-editor-open-file> setting these variables to reflect your environment.
-- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[YOUR_ORG\]">organization</walkthrough-editor-select-regex>
-- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[YOUR_BILLING_ACCOUNT_NAME\]">billing account</walkthrough-editor-select-regex>
-- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[NAME FOR THE PROJECT YOU WILL CREATE\]">project name</walkthrough-editor-select-regex>
-- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[COMPUTE ZONE YOU WANT TO USE\]">zone</walkthrough-editor-select-regex>
+Edit <walkthrough-editor-open-file filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh">env.sh</walkthrough-editor-open-file> and replace
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[YOUR_ORG\]">[YOUR_ORG]</walkthrough-editor-select-regex> with the name of the [organization](https://cloud.google.com/resource-manager/docs/cloud-platform-resource-hierarchy#cloud_platform_resource_hierarchy_and_iam_policy_hierarchy) that will own your project
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[YOUR_BILLING_ACCOUNT_NAME\]">[YOUR_BILLING_ACCOUNT_NAME]</walkthrough-editor-select-regex> with the name of the account responsible for any costs incurred by your project
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[NAME FOR THE PROJECT YOU WILL CREATE\]">[NAME FOR THE PROJECT YOU WILL CREATE]</walkthrough-editor-select-regex> with the name of your project
+- <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/env.sh" regex="\[COMPUTE ZONE YOU WANT TO USE\]">[COMPUTE ZONE YOU WANT TO USE]</walkthrough-editor-select-regex> with the name of the Cloud Platform compute zone that will contain your project
 
 ```bash
 source ./env.sh
@@ -62,24 +62,25 @@ cd slurm-gcp
 You need to customize the <walkthrough-editor-open-file filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml">slurm-cluster.yaml</walkthrough-editor-open-file> file
 for your environment before you deploy your cluster.
 
-* Uncomment this <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="login_node_count">line</walkthrough-editor-select-regex>.
-If you want more than one login node modify the value of ```login_node_count``` accordingly.
+* Uncomment the <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="login_node_count">login_node_count</walkthrough-editor-select-regex> line.
+* If you want more than one login node, e.g., if you need to handle a large number of users, modify the value of ```login_node_count``` accordingly.
 * Add a comma separated list of the user ids authorized to use your cluster on the
 <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="default_user">default user</walkthrough-editor-select-regex>
-line
+line. Each entry to be just the user id, i.e., for ```alice@example.com``` the correct entry would be ```alice```. If you are running the tutorial from Cloud Shell the correct user id will be the full
+account name with the '@' and '.' characters replaced by an '_'; for ```alice@example.com``` the correct entry would be ```alice_example_com```.
 
 You may also want to make one or more optional changes:
 
 * Deploy your cluster to a different region and/or zone by modifying the values
-<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="region.*:">here</walkthrough-editor-select-regex>
-and <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="zone.*:">here</walkthrough-editor-select-regex>
-* Use a different type of <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="compute_machine_type">compute node</walkthrough-editor-select-regex>, 
+<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="region.*:">region</walkthrough-editor-select-regex>
+and <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="zone.*:">zone</walkthrough-editor-select-regex>
+* Use a different type of <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="compute_machine_type">compute_machine_type</walkthrough-editor-select-regex>, 
 e.g., if you need more cores or memory than are available in the default choice of ```n1-standard-2```
-* Use an existing <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="vpc_net">VPC network</walkthrough-editor-select-regex> and
-<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="vpc_subnet">VPC subnet</walkthrough-editor-select-regex> combination. The
-network/subnet requirements are described in the file ```slurm.jinja.scheme```
-* Specify a different <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="slurm_version">version</walkthrough-editor-select-regex>
-of Slurm for your cluster. By default the latest stable version, 17.11.8 at the time of this writing, will be deployed
+* Use an existing <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="vpc_net">vpc_net</walkthrough-editor-select-regex> and
+<walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="vpc_subnet">vpc_subnet</walkthrough-editor-select-regex> combination. The
+network/subnet requirements are described in the file ```slurm.jinja.scheme```. If you don't specify values a new network/subnet will be created for your cluster.
+* Specify a different <walkthrough-editor-select-regex filePath="community/tutorials/using-slurm-to-host-jupyter-notebooks/slurm-gcp/slurm-cluster.yaml" regex="slurm_version">slurm_version</walkthrough-editor-select-regex>
+of Slurm for your cluster. By default the latest stable version, 17.11.8 at the time of this writing, will be deployed. If you are an experienced Slurm user and need features in a more recent release specify it here.
 
 3. Patch the Slurm startup-script
 
@@ -103,10 +104,52 @@ gcloud deployment-manager deployments --project="$(gcloud config get-value core/
 It will take five to ten minutes after the deployment completes for your cluster's configuration
 to complete. Wait ten minutes and then use these commands to verify that your cluster is operational.
 
+Check that the cluster is ready by logging in to the login node.
 ```bash
-gcloud compute ssh google1-login1 --command 'sbatch -N2 --wrap="srun hostname"'
+gcloud compute ssh google1-login1
 ```
 
+You should see a "splash screen" that looks like this.
+```
+                                 SSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                        SSSS     SSSSSSS     SSSS
+                       SSSSSS               SSSSSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                        SSSS    SSSSSSSSS    SSSS
+                SSS             SSSSSSSSS             SSS
+               SSSSS    SSSS    SSSSSSSSS    SSSS    SSSSS
+                SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                SSS    SSSSSS               SSSSSS    SSS
+               SSSSS    SSSS     SSSSSSS     SSSS    SSSSS
+          S     SSS             SSSSSSSSS             SSS     S
+         SSS            SSSS    SSSSSSSSS    SSSS            SSS
+          S     SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS     S
+               SSSSS   SSSSSS   SSSSSSSSS   SSSSSS   SSSSS
+          S    SSSSS    SSSS     SSSSSSS     SSSS    SSSSS    S
+    S    SSS    SSS                                   SSS    SSS    S
+    S     S                                                   S     S
+                SSS
+                SSS
+                SSS
+                SSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS    SSSSSSSSS   SSSSSSSSSSSSSSSSSSSS
+SSSSSSSSSSSSS   SSS   SSSS       SSSS   SSSSSSSSSS  SSSSSSSSSSSSSSSSSSSSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
+[alice_example_com@google1-login1 ~]$ 
+```
+
+When the cluster is ready schedule a simple job to verify that it is working correctly.
 ```bash
 gcloud compute ssh google1-login1 --command 'cat slurm-*.out'
 ```
