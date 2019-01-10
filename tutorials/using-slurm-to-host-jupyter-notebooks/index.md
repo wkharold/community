@@ -261,7 +261,7 @@ You can access your notebook from the Cloud Shell using the Web Preview <walkthr
 Substitute your notebook's job number for *nn* in this command to get the login token for your notebook.
 
 ```
-gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-[NN].log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
 ```
 
 Save this value as you will need it to login to your notebook.
