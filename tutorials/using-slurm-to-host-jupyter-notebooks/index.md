@@ -220,7 +220,7 @@ Substitute your notebook's job number for [NN] in this command to verify that yo
 notebook job started up properly.
 
 ```bash
-gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log'
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-[NN].log'
 ```
 
 You should see output that looks like this:
