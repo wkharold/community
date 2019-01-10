@@ -274,7 +274,7 @@ tunnel to your notebook. You can run it with this command.
 Substitute your notebook's job number for [NN] in this command to create an ssh tunnel to your notebook.
 
 ```
-$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log' 2> /dev/null | egrep '^gcloud')
+$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-[NN].log' 2> /dev/null | egrep '^gcloud')
 ```
 
 ## Connect to your Notebook
