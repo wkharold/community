@@ -84,7 +84,7 @@ of Slurm for your cluster. By default the latest stable version, 17.11.8 at the 
 3. Patch the Slurm startup-script
 
 You need to patch the script that is run on each cluster node at startup. The changes in the patch setup the symbolic links
-and directories to support the installation of software packages shared across nodes and the [environment modules](http://modules.sourceforge.net) uesd
+and directories to support the installation of software packages shared across nodes and the [environment modules](http://modules.sourceforge.net) used
 to access those packages.
 
 ```bash
@@ -209,18 +209,18 @@ gcloud compute ssh google1-login1 --command 'sbatch notebook.batch'
 
 You should see output that looks like this:
 ```
-Submitted batch job nn
+Submitted batch job [NN]
 ```
 
-Where *nn* is the job number for your notebook.
+Where [NN] is the job number for your notebook.
 
 3. Verify that your Jupyter Notebook started up properly.
 
-Substitute your notebook's job number for *nn* in this command to verfiy that your
+Substitute your notebook's job number for [NN] in this command to verify that your
 notebook job started up properly.
 
 ```bash
-gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log'
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-[NN].log'
 ```
 
 You should see output that looks like this:
@@ -261,20 +261,20 @@ You can access your notebook from the Cloud Shell using the Web Preview <walkthr
 Substitute your notebook's job number for *nn* in this command to get the login token for your notebook.
 
 ```
-gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
+gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-[NN].log' 2> /dev/null | egrep '^\[' | grep '?token' | awk -F'=' '{print $2}'
 ```
 
 Save this value as you will need it to login to your notebook.
 
 2. Create an ssh tunnel to your notebook
 
-Your ```jupyter-notebook-nn.log``` file contains the gcloud command you run to create an ssh
+Your ```jupyter-notebook-[NN].log``` file contains the gcloud command you run to create an ssh
 tunnel to your notebook. You can run it with this command.
 
-Substitute your notebook's job number for *nn* in this command to create an ssh tunnel to your notebook.
+Substitute your notebook's job number for [NN] in this command to create an ssh tunnel to your notebook.
 
 ```
-$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-nn.log' 2> /dev/null | egrep '^gcloud')
+$(gcloud compute ssh google1-login1 --command 'cat jupyter-notebook-[NN].log' 2> /dev/null | egrep '^gcloud')
 ```
 
 ## Connect to your Notebook
