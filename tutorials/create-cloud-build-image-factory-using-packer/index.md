@@ -26,27 +26,31 @@ This task will help you setup a new GCP project in which to run your packer
 build factory. **(you can also use an existing project and skip to the next
 step)**
 
-    PROJECT=[NEW PROJECT NAME]
-    ORG=[YOUR ORGANIZATION NAME]
-    BILLING_ACCOUNT=[YOUR_BILLING_ACCOUNT_NAME]
-    ZONE=[COMPUTE ZONE YOU WANT TO USE]
-    ACCOUNT=[GOOGLE ACCOUNT YOU WANT TO USE] or $(gcloud config get-value account)
+```sh
+PROJECT=[NEW PROJECT NAME]
+ORG=[YOUR ORGANIZATION NAME]
+BILLING_ACCOUNT=[YOUR_BILLING_ACCOUNT_NAME]
+ZONE=[COMPUTE ZONE YOU WANT TO USE]
+ACCOUNT=[GOOGLE ACCOUNT YOU WANT TO USE] or $(gcloud config get-value account)
 
-    gcloud projects create "$PROJECT" --organization=$(gcloud organizations list --format="value(name)" --filter="(displayName='$ORG')")
-    gcloud beta billing projects link $PROJECT --billing-account=$(gcloud alpha billing accounts list --format='value(name)' --filter="(displayName='$BILLING_ACCOUNT')")
-    gcloud config configurations create --activate $PROJECT
-    gcloud config set project $PROJECT
-    gcloud config set compute/zone $ZONE
-    gcloud config set account $ACCOUNT
+gcloud projects create "$PROJECT" --organization=$(gcloud organizations list --format="value(name)" --filter="(displayName='$ORG')")
+gcloud beta billing projects link $PROJECT --billing-account=$(gcloud alpha billing accounts list --format='value(name)' --filter="(displayName='$BILLING_ACCOUNT')")
+gcloud config configurations create --activate $PROJECT
+gcloud config set project $PROJECT
+gcloud config set compute/zone $ZONE
+gcloud config set account $ACCOUNT
+```
 
 ## Task 1: Set the project variable (Skip this step if you created a new project above)
 
 Ensure you are working with the project you want to use in gcloud.
 For more information on configuraitons see [configurations](https://cloud.google.com/sdk/gcloud/reference/config/configurations/).
-Fill in `[CONFIGURATION NAME]` with the name of hte configuration you want to use.
+Fill in `[CONFIGURATION NAME]` with the name of the configuration you want to use.
 
-    gcloud config configurations activate [CONFIGURATION NAME] #The configuration for the project you want to use
-    PROJECT=$(gcloud config get-value project)
+```sh
+gcloud config configurations activate [CONFIGURATION NAME] #The configuration for the project you want to use
+PROJECT=$(gcloud config get-value project)
+```
 
 ## Task 2: Copy the files for this tutorial to a new working directory and git repository
 
@@ -77,7 +81,7 @@ Fill in `[CONFIGURATION NAME]` with the name of hte configuration you want to us
 
 First find the cloudbuild service account. Next add the editor role to it.
 
-    CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild)"  --flatten="bindings[].members" --format="value(bindings.members[])")
+    CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild.builds.builder)"  --flatten="bindings[].members" --format="value(bindings.members[])")
 
     gcloud projects add-iam-policy-binding $PROJECT \
       --member $CLOUD_BUILD_ACCOUNT \
@@ -92,14 +96,14 @@ First find the cloudbuild service account. Next add the editor role to it.
 You can create a trigger on the [build triggers page](https://console.cloud.google.com/cloud-build/triggers) of the GCP Console by following these steps:
 
 1. Click **"Create Trigger"**
-1. Select "Cloud Source Repository" Click "Continue".
-1. Select "helloworld-image-factory" anc click "Continue"
-1. Enter "Hello world image factory" for Name."
+1. Select "Cloud Source Repository" and click "Continue".
+1. Select "helloworld-image-factory" and click "Continue".
+1. Enter "Hello world image factory" for "Name".
 1. Set the trigger for "Tag".
-1. Set the build type to "cloudbuild.yaml"
-1. Set the substitution, `_IMAGE_FAMILY` to centos-7
+1. Set the build type to "cloudbuild.yaml".
+1. Set the substitution, `_IMAGE_FAMILY` to centos-7.
 1. Set the substitution, `_IMAGE_ZONE` to the zone you want to use the value of `$ZONE`.
-1. Click "Create Trigger"
+1. Click "Create Trigger".
 
 **Note: To see a list of image families:**
 
