@@ -33,7 +33,7 @@ In the section, you create an AI Platform Notebook instance. An AI Platform Note
 a Compute Engine VM that is running JupyterLab.
 
 1. Go to the [**AI Platform Notebooks** page](https://console.cloud.google.com/ai-platform/notebooks)
-   ![New Instance](AIPlatformNewInstance.png)
+   ![New Instance](AIplatformNewInstance.png)
 2. Click **NEW INSTANCE**
    ![New Notebook](NewNotebookInstance.png)
 3. Click **CUDA 10.1** > **Without GPUs**
