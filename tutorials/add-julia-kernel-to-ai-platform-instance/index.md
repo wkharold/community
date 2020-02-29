@@ -59,7 +59,7 @@ In this section you open your AI Platform Notebook and use the Terminal to insta
 1. Click **OPEN JUPYTERLAB**
    ![OpenJupyterLab](OpenJupyterLab.png)
 2. Click **Other** > **Terminal**
-   ![LaunchTerminal](LaunchTerminal.png)
+   ![LauncherTerminal](LauncherTerminal.png)
 
 In the terminal enter
 
